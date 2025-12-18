@@ -54,7 +54,7 @@ python3 convert_abp_to_surge.py > nsfw_rules.list
 
 ```ini
 [Rule]
-RULE-SET,https://raw.githubusercontent.com/your-username/your-repo/main/nsfw_rules.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/Ham-Kris/nsfw-domain-list/refs/heads/main/nsfw_rules.list,REJECT
 ```
 
 ## 统计信息
