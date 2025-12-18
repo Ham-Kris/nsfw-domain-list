@@ -60,12 +60,7 @@ jobs:
 
         # 生成新的提交信息
         NEW_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        git commit -m "Auto-update NSFW rules
-
-Updated at: $NEW_DATE
-Previous commit: $LATEST_COMMIT
-
-Generated from: https://cdn.jsdelivr.net/gh/sjhgvr/oisd@main/abp_nsfw.txt"
+        git commit -m "Auto-update NSFW rules - $NEW_DATE"
 
         # 推送到当前分支
         git push
@@ -75,10 +70,17 @@ Generated from: https://cdn.jsdelivr.net/gh/sjhgvr/oisd@main/abp_nsfw.txt"
       uses: actions/github-script@v6
       with:
         script: |
+          const date = new Date().toISOString();
+          const runUrl = context.payload.workflow_run?.html_url || 'N/A';
+
           github.rest.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
             title: 'NSFW规则自动更新失败',
-            body: `NSFW规则自动更新工作流执行失败。\n\n**运行详情:** ${context.payload.workflow_run?.html_url}\n\n**时间:** ${new Date().toISOString()}`,
+            body: `NSFW规则自动更新工作流执行失败。
+
+**运行详情:** ${runUrl}
+
+**时间:** ${date}`,
             labels: ['bug', 'automated']
           })
