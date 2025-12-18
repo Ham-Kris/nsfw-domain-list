@@ -77,10 +77,6 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             title: 'NSFW规则自动更新失败',
-            body: `NSFW规则自动更新工作流执行失败。
-
-**运行详情:** ${runUrl}
-
-**时间:** ${date}`,
+            body: 'NSFW规则自动更新工作流执行失败。\\n\\n**运行详情:** ' + runUrl + '\\n\\n**时间:** ' + date,
             labels: ['bug', 'automated']
           })
