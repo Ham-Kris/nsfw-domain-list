@@ -17,7 +17,6 @@ jobs:
 
     permissions:
       contents: write    # 允许推送代码
-      issues: write      # 允许创建和管理issues
 
     steps:
     - name: Checkout repository
@@ -90,42 +89,12 @@ jobs:
           exit 1
         fi
 
-    - name: Create issue on failure
+    - name: Log failure details
       if: failure()
-      uses: actions/github-script@v6
-      with:
-        script: |
-          try {
-            const date = new Date().toISOString();
-            const runUrl = context.payload.workflow_run?.html_url || 'N/A';
-
-            // 检查是否已存在相同的issue
-            const existingIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['bug', 'automated'],
-              state: 'open'
-            });
-
-            const recentIssue = existingIssues.data.find(issue =>
-              issue.title.includes('NSFW规则自动更新失败') &&
-              new Date(issue.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // 24小时内
-            );
-
-            if (recentIssue) {
-              console.log('已存在最近的错误issue，跳过创建');
-              return;
-            }
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'NSFW规则自动更新失败',
-              body: 'NSFW规则自动更新工作流执行失败。\\n\\n**运行详情:** ' + runUrl + '\\n\\n**时间:** ' + date,
-              labels: ['bug', 'automated']
-            });
-
-            console.log('错误issue创建成功');
-          } catch (error) {
-            console.error('创建错误issue失败:', error.message);
-          }
+      run: |
+        echo "❌ 工作流执行失败"
+        echo "🕒 失败时间: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+        echo "🔗 运行详情: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo ""
+        echo "请检查上面的日志了解详细错误信息"
+        echo "如需手动修复，请访问GitHub仓库的Actions页面"
