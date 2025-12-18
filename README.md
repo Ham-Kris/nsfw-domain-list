@@ -41,8 +41,8 @@ python3 convert_abp_to_surge.py > nsfw_rules.list
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/Ham-Kris/nsfw-domain-list
+cd nsfw-domain-list
 
 # 运行脚本
 python3 convert_abp_to_surge.py > nsfw_rules.list
