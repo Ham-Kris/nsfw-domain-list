@@ -15,11 +15,16 @@ jobs:
   update-rules:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write    # 允许推送代码
+      issues: write      # 允许创建和管理issues
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # 获取完整历史以便提交
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -49,34 +54,78 @@ jobs:
     - name: Commit and push changes
       if: steps.verify-changed-files.outputs.changed == 'true'
       run: |
+        echo "开始提交和推送变更..."
+
+        # 配置git用户信息
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-        # 添加所有变更的文件
-        git add nsfw_rules.list
+        # 显示当前状态
+        echo "当前分支: $(git branch --show-current)"
+        echo "变更文件:"
+        git status --porcelain
 
-        # 获取最新的提交信息作为参考
-        LATEST_COMMIT=$(git log -1 --pretty=format:"%s")
+        # 添加变更的文件
+        git add nsfw_rules.list
 
         # 生成新的提交信息
         NEW_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        git commit -m "Auto-update NSFW rules - $NEW_DATE"
+        COMMIT_MSG="Auto-update NSFW rules - $NEW_DATE"
 
-        # 推送到当前分支
-        git push
+        echo "提交信息: $COMMIT_MSG"
+
+        # 提交变更
+        if git commit -m "$COMMIT_MSG"; then
+          echo "提交成功，开始推送..."
+          # 推送到当前分支
+          if git push origin HEAD; then
+            echo "推送成功！"
+          else
+            echo "推送失败，退出代码: $?"
+            git log --oneline -5
+            exit 1
+          fi
+        else
+          echo "提交失败"
+          exit 1
+        fi
 
     - name: Create issue on failure
       if: failure()
       uses: actions/github-script@v6
       with:
         script: |
-          const date = new Date().toISOString();
-          const runUrl = context.payload.workflow_run?.html_url || 'N/A';
+          try {
+            const date = new Date().toISOString();
+            const runUrl = context.payload.workflow_run?.html_url || 'N/A';
 
-          github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: 'NSFW规则自动更新失败',
-            body: 'NSFW规则自动更新工作流执行失败。\\n\\n**运行详情:** ' + runUrl + '\\n\\n**时间:** ' + date,
-            labels: ['bug', 'automated']
-          })
+            // 检查是否已存在相同的issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['bug', 'automated'],
+              state: 'open'
+            });
+
+            const recentIssue = existingIssues.data.find(issue =>
+              issue.title.includes('NSFW规则自动更新失败') &&
+              new Date(issue.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // 24小时内
+            );
+
+            if (recentIssue) {
+              console.log('已存在最近的错误issue，跳过创建');
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'NSFW规则自动更新失败',
+              body: 'NSFW规则自动更新工作流执行失败。\\n\\n**运行详情:** ' + runUrl + '\\n\\n**时间:** ' + date,
+              labels: ['bug', 'automated']
+            });
+
+            console.log('错误issue创建成功');
+          } catch (error) {
+            console.error('创建错误issue失败:', error.message);
+          }
