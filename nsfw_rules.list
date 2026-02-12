@@ -1,7 +1,7 @@
 # NSFW域名规则列表
 # 从ABP NSFW列表转换而来
 # 来源: https://cdn.jsdelivr.net/gh/sjhgvr/oisd@main/abp_nsfw.txt
-# 生成时间: 2026-02-11 08:51:47 UTC
+# 生成时间: 2026-02-12 08:49:51 UTC
 
 DOMAIN-SUFFIX,0.011.free.fr
 DOMAIN-SUFFIX,0.123.free.fr
